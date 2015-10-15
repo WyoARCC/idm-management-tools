@@ -18,6 +18,7 @@
 
 import argparse
 import logging
+import ldap
 
 __version__='1.0'
 
@@ -67,11 +68,25 @@ else:
     logging.warning("invalid default shell (" + args.defShell + ") default shell set to bash")
     args.defShell='bash'
 
+# import users from file if set
+if args.filename != None: 
+    logging.debug("opening userfile to import users: " + args.filename)
+    with open(args.filename) as userfile:
+        usernames = userfile.readlines()
+    logging.debug("user import success, " + args.filename + " closed.")
+    args.usernames = args.usernames + usernames
+    userfile.close()
+
 # verify user args and shell option
 logging.info("validating shell options...")
 logging.debug(args.usernames)
 
+if not args.usernames:
+    logging.error("no users to add")
+    exit()
+
 for uname in args.usernames:
+    uname=uname.rstrip()
     if ":" in uname:
         username=uname.split(":")[0]
         shell=uname.split(":")[1].lower()
@@ -86,19 +101,11 @@ for uname in args.usernames:
     elif shell=='':
         logging.debug( "no shell set for " + username + " default to " + args.defShell)
     else:
-        logging.warning( shell + " invalid! Shell for " + username + 
+        logging.warning(shell + " invalid! Shell for " + username + 
                        " set to default (" + args.defShell + ")")
-        
 
-
-
-
-
-
-
-
-
-
+# open ldap connection 
+l = ldap.open("windows.uwyo.edu")
 
 
 
