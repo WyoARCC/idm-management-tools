@@ -72,21 +72,34 @@ def ldapspecial(username):
 def parseresult(ldapstring):
 	ldapstring = ldapstring.lower()
 	attrlist = ldapstring.split("\n")
- 
+ 	
+	name, givenname, sn, displayname, mail, uidnumber, gidnumber, telephonenumber, department, title = '' 
+	
 	for element in attrlist:
 		element = element.split(": ")
 		
 		if element[0] =='dn':
-		elif element[0] == 'name':	
+			logging.debug("recognized returned ldap string")
+		elif element[0] == 'name':
+			name = element[1].lower()	
 		elif element[0] == 'givenname':	
+			givenname = element[1]	
 		elif element[0] == 'sn':	
+			sn = element[1]	
 		elif element[0] == 'displayname':	
+			displayname = element[1]	
 		elif element[0] == 'mail':	
+			mail = element[1].lower()	
 		elif element[0] == 'uidnumber':	
+			uidnumber = element[1]	
 		elif element[0] == 'gidnumber':	
-		elif element[0] == '':	
-		elif element[0] == 'name':	
-		elif element[0] == 'name':	
+			gidnumber = element[1]	
+		elif element[0] == 'telephonenumber':	
+			telephonenumber = element[1]	
+		elif element[0] == 'department':	
+			department = element[1]	
+		elif element[0] == 'title':	
+			title = element[1]	
 	
 
 
