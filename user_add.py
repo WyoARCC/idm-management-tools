@@ -1,6 +1,6 @@
 ###
 #
-# idmManAdd.py
+# user_add.py
 #
 # Troy Axthelm
 # Advanced Research Computing Center
@@ -63,3 +63,44 @@ title:\t\t%s" % (username, firstname, lastname, displayname, emailaddr, phone, o
 
     logging.info("manual user ready to be added")
     exit()
+
+# read in users from a file
+def readusers(filename):
+    logging.debug("opening userfile to import users: " + filename)
+    with open(filename) as userfile:
+        usernames = userfile.readlines()
+    logging.debug("user import success, " + filename + " closed.")
+    userfile.close()
+    return usernames
+
+#validate the user shell options
+def validateshell(usernames,defShell):
+    if not usernames:
+        logging.error("no users to add")
+        exit()
+
+    for uname in usernames:
+        # remove eofline '\n' and whitespace from username args
+        uname=uname.rstrip()
+        uname=uname.replace(" ","")
+        if ":" in uname:
+            username=uname.split(":")[0]
+            shell=uname.split(":")[1].lower()
+            # verify username is not blank
+            if username=='':
+                logging.error("blank username encountered, abort!")
+                exit()
+        else:
+            username=uname
+            shell=''
+
+        logging.debug("checking user shell option: " + username + " " + shell)
+
+        if shell=='bash' or shell=='dash' or shell=='tcsh':
+            logging.debug( shell + " valid for " + username)
+        elif shell=='':
+            logging.debug( "no shell set for " + username + " default to " + defShell)
+        else:
+            logging.warning(shell + " invalid! Shell for " + username +
+                           " set to default (" + defShell + ")")
+

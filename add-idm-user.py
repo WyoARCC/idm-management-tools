@@ -18,7 +18,7 @@
 
 import argparse
 import logging
-import idmManAdd
+import user_add
 
 __version__='1.0'
 
@@ -63,7 +63,7 @@ logging.debug(args)
 
 # if --manual-add, begin interactive process to add IDM user
 if args.manual==True:
-    idmManAdd.manualadd()
+    user_add.manualadd()
 
 # verify default shell
 args.defShell = args.defShell.lower()
@@ -76,43 +76,12 @@ else:
 
 # import users from file if set
 if args.filename != None: 
-    logging.debug("opening userfile to import users: " + args.filename)
-    with open(args.filename) as userfile:
-        usernames = userfile.readlines()
-    logging.debug("user import success, " + args.filename + " closed.")
-    args.usernames = args.usernames + usernames
-    userfile.close()
-
+    args.usernames = args.usernames + user_add.readusers(args.filename)
+    
 # verify user args and shell option
 logging.info("validating shell options...")
 logging.debug(args.usernames)
 
-if not args.usernames:
-    logging.error("no users to add")
-    exit()
-
-for uname in args.usernames:
-    # remove eofline '\n' and whitespace from username args
-    uname=uname.rstrip()
-    uname=uname.replace(" ","")    
-    if ":" in uname:
-        username=uname.split(":")[0]
-        shell=uname.split(":")[1].lower()
-        # verify username is not blank
-        if username=='':
-            logging.error("blank username encountered, abort!")
-            exit()
-    else:
-        username=uname
-        shell=''
-
-    logging.debug("checking user shell option: " + username + " " + shell)
-
-    if shell=='bash' or shell=='dash' or shell=='tcsh':
-        logging.debug( shell + " valid for " + username)
-    elif shell=='':
-        logging.debug( "no shell set for " + username + " default to " + args.defShell)
-    else:
-        logging.warning(shell + " invalid! Shell for " + username + 
-                       " set to default (" + args.defShell + ")")
-
+# validate user shell options if manual not selected
+if args.manual == False:
+    user_add.validateshell(args.usernames, args.defShell)
