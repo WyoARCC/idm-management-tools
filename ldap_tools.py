@@ -19,12 +19,14 @@ import subprocess
 
 __version__='1.0'
 
+attributes = "givenname sn name displayname mail uidnumber gidnumber telephonenumber department title"
+
 def ldapsearch(username):
 	logging.debug("searching cn=Users for %s" % username)
 	# search cn=Users for a matching username (most normal UW accounts will be here
 	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
 		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y ~/.holmes/pen name=%s mail' % username
+		  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
 	
 	logging.debug(ldapcmd)
 	
@@ -46,7 +48,7 @@ def ldapsearch(username):
 	if searchresult == '':	
 		logging.debug("user %s was not found in ldap cn=Users or ou=Special_Accounts" % username)
 		logging.info("Failed to find user %s in AD, abort!" % username)
-		return 'nodata'
+		print("user %s not found in AD, abort!" % username)
 	else:
 		return searchresult
 
@@ -55,7 +57,7 @@ def ldapspecial(username):
 	# search cn=Special_Accounts for a matching username
 	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "ou=Special_Accounts,ou=AdminGROUPS,dc=windows,' +\
 		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y ~/.holmes/pen name=%s mail' % username
+		  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
 	
 	logging.debug(ldapcmd)
 	
@@ -66,3 +68,43 @@ def ldapspecial(username):
 	logging.debug("ldap cn=Special_Accounts for %s returned: %s" % (username, searchresult))
 
 	return searchresult
+
+def parseresult(ldapstring):
+	ldapstring = ldapstring.lower()
+	attrlist = ldapstring.split("\n")
+ 
+	for element in attrlist:
+		element = element.split(": ")
+		
+		if element[0] =='dn':
+		elif element[0] == 'name':	
+		elif element[0] == 'givenname':	
+		elif element[0] == 'sn':	
+		elif element[0] == 'displayname':	
+		elif element[0] == 'mail':	
+		elif element[0] == 'uidnumber':	
+		elif element[0] == 'gidnumber':	
+		elif element[0] == '':	
+		elif element[0] == 'name':	
+		elif element[0] == 'name':	
+	
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ 
