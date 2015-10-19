@@ -19,6 +19,7 @@
 import argparse
 import logging
 import user_add
+import ldap_tools
 
 __version__='1.0'
 
@@ -34,7 +35,7 @@ parser = argparse.ArgumentParser(prog='add-idm-user.py', usage=usage,
 parser.add_argument('--version', action='version', version="%(prog)s "+__version__)
 
 # default arg values
-parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, defShell='bash', manual=False)
+parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, defShell='bash', manual=False, confirm=True)
 
 # args
 parser.add_argument(  "-f", "--file", dest="filename", 
@@ -50,6 +51,8 @@ parser.add_argument(  "-n", "--dry-run", action="store_true", dest="dryRun",
                     help="run but do not add users to idm")
 parser.add_argument(  "-l", "--logfile", dest="logfile", 
                     help="change logfile location")
+parser.add_argument(  "-y", "--no-confirm", action="store_false", dest="confirm", 
+                    help="do not confirm user attributes after ldap search")
 parser.add_argument(  "--manual-add", action="store_true", dest="manual", 
                     help="manually add user not in AD (be careful)")
 parser.add_argument(  'usernames', nargs='*')
@@ -82,6 +85,38 @@ if args.filename != None:
 logging.info("validating shell options...")
 logging.debug(args.usernames)
 
-# validate user shell options if manual not selected
+# if not entering users manually...
 if args.manual == False:
-    user_add.validateshell(args.usernames, args.defShell)
+	# validate and correct user shell options if manual not selected
+    	args.usernames = user_add.validateshell(args.usernames, args.defShell)
+	logging.debug(args.usernames)
+	print args.usernames
+
+	attrs=[]
+	
+	# find user ldap entries
+	for uname in args.usernames:
+		uname = uname.split(':')
+		attrs.append(ldap_tools.ldapsearch(uname[0],uname[1]))
+	print attrs
+
+# if the user would like to confim user attributes
+if args.confirm==True:
+	# print out user attributes
+	print("\nif confirmed, the following user(s) will be added to idm:")
+
+	for users in attrs:
+		userattrs=("\nusername:\t%s\nfirstname:\t%s\nlastname:\t%s\ndisplayname:\t%s\nemailAddr:\t%s\nuidnumber:\t%s\ngidnumber:\t%s\nphone:\t\t%s\norgunit:\t%s\n\
+title:\t\t%s\nshell:\t\t%s" % (users[0],users[1],users[2],users[3],users[4],users[5],users[6],users[7],users[8],users[9],users[10]))
+
+		print userattrs	
+
+	confirm = raw_input("\nAre you sure you wish to add the above user(s) to idm (y/n)? [n]: ")
+	
+	# verify the user information is confirmed
+	if confirm.lower() != 'y':
+		logging.debug("user information not confirmed: %s, abort!" % confirm)
+		print "user information not confirmed, no changes have been made to idm"
+		exit()
+
+# if not a dry run, add user to idm

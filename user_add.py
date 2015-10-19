@@ -40,19 +40,20 @@ def manualadd():
     phone = raw_input("**Enter new user's phone number (eg: (123)456-789): ")
     orgunit = raw_input("**Enter new user's department or business (eg: Xco, Systems Support): ")
     title = raw_input("**Enter new user's official title or description (eg: Software Specialist): ")
+    shell = raw_input("**Enter new user's preffered shell (eg: bash): ")
     
     logging.debug("username: %s, firstname: %s, lastname: %s, displayname: %s, emailAddr: %s, phone: %s, orgunit: %s,\
-    title: %s" % (username, firstname, lastname, displayname, emailaddr, phone, orgunit, title))
+    title: %s, shell: %s" % (username, firstname, lastname, displayname, emailaddr, phone, orgunit, title, shell))
 
     # verify that required fields are not empty
     if username=='' or displayname=='':
-        logging.error("missing required field, abort!")
+        logging.error("missing required field to manually add user, abort!")
         exit()
 
     # confirm user attributes
     print("\nPlease review the user attributes. User will be validated and added to IDM when confirmed.")
     print("\nusername:\t%s\nfirstname:\t%s\nlastname:\t%s\ndisplayname:\t%s\nemailAddr:\t%s\nphone:\t\t%s\norgunit:\t%s\n\
-title:\t\t%s" % (username, firstname, lastname, displayname, emailaddr, phone, orgunit, title))
+title:\t\t%s, shell:\t\t%s" % (username, firstname, lastname, displayname, emailaddr, phone, orgunit, title, shell))
 
     confirm = raw_input("\nAre all of the above attributes are correct (y/n)? [n]: ") 
 
@@ -62,7 +63,8 @@ title:\t\t%s" % (username, firstname, lastname, displayname, emailaddr, phone, o
         exit()
 
     logging.info("manual user ready to be added")
-    exit()
+    adduser = [name, firstname, lastname, displayname, emailaddr, '','', phone, department, title, shell]
+    return adduser
 
 # read in users from a file
 def readusers(filename):
@@ -78,6 +80,8 @@ def validateshell(usernames,defShell):
     if not usernames:
         logging.error("no users to add")
         exit()
+    
+    newnames=[]
 
     for uname in usernames:
         # remove eofline '\n' and whitespace from username args
@@ -98,9 +102,15 @@ def validateshell(usernames,defShell):
 
         if shell=='bash' or shell=='dash' or shell=='tcsh':
             logging.debug( shell + " valid for " + username)
+	    uname='%s:%s' % (username,shell)
         elif shell=='':
             logging.debug( "no shell set for " + username + " default to " + defShell)
+	    uname='%s:%s' % (username,defShell)
         else:
             logging.warning(shell + " invalid! Shell for " + username +
                            " set to default (" + defShell + ")")
-
+	    uname='%s:%s' % (username,defShell)
+	
+	newnames.append(uname)
+    
+    return newnames
