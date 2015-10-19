@@ -18,7 +18,7 @@ import logging
 
 __version__='1.0'
 
-def manualadd():
+def manualadd(dstring):
     # if --manual-add, begin interactive process to add IDM user
     logging.debug("begining manual addition process")
     confirm = raw_input("\nYou have selected to manually add a user, continue process (y/n)? [n]: ")
@@ -51,11 +51,11 @@ def manualadd():
         exit()
 
     # confirm user attributes
-    print("\nPlease review the user attributes. User will be validated and added to IDM when confirmed.")
+    print("\n"+dstring+"Please review the user attributes. User will be validated and added to IDM when confirmed.")
     print("\nusername:\t%s\nfirstname:\t%s\nlastname:\t%s\ndisplayname:\t%s\nemailAddr:\t%s\nphone:\t\t%s\norgunit:\t%s\n\
-title:\t\t%s, shell:\t\t%s" % (username, firstname, lastname, displayname, emailaddr, phone, orgunit, title, shell))
+title:\t\t%s\nshell:\t\t%s" % (username, firstname, lastname, displayname, emailaddr, phone, orgunit, title, shell))
 
-    confirm = raw_input("\nAre all of the above attributes are correct (y/n)? [n]: ") 
+    confirm = raw_input("\n"+dstring+"Are all of the above attributes are correct (y/n)? [n]: ") 
 
     # check to see if user confirmed attributes are correct
     if confirm.lower()!='y':
@@ -63,7 +63,7 @@ title:\t\t%s, shell:\t\t%s" % (username, firstname, lastname, displayname, email
         exit()
 
     logging.info("manual user ready to be added")
-    adduser = [name, firstname, lastname, displayname, emailaddr, '','', phone, department, title, shell]
+    adduser = [username, firstname, lastname, displayname, emailaddr, '','', phone, orgunit, title, shell]
     return adduser
 
 # read in users from a file

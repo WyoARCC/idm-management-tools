@@ -48,7 +48,7 @@ parser.add_argument(  "-v","--verbose", action="store_true", dest="verbose",
                     help="print status messages to stdout")
 parser.add_argument(  "-q", "--quiet", action="store_false", dest="verbose", 
                     help="don't print status messages to stdout")
-parser.add_argument(  "-n", "--dry-run", action="store_true", dest="dryRun",
+parser.add_argument(  "-n", "--dry-run", action="store_true", dest="dry",
                     help="run but do not add users to idm")
 parser.add_argument(  "-l", "--logfile", dest="logfile", 
                     help="change logfile location")
@@ -61,13 +61,18 @@ parser.add_argument(  'usernames', nargs='*')
 # create parser
 args = parser.parse_args()
 
-logging.basicConfig(format='%(asctime)s :: %(message)s', level=logging.DEBUG)
+logging.basicConfig(format='%(asctime)s :: %(message)s', level=logging.CRITICAL)
 logging.info("START")
 logging.debug(args)
 
+dstring =""
+if args.dry == True:
+	dstring = "--dry-run selected, no changes will be made to idm regardless of confirmation!\n"
+
 # if --manual-add, begin interactive process to add IDM user
 if args.manual==True:
-    user_add.manualadd()
+    	attrs = []
+	attrs.append( user_add.manualadd(dstring) )
 
 # verify default shell
 args.defShell = args.defShell.lower()
@@ -91,7 +96,6 @@ if args.manual == False:
 	# validate and correct user shell options if manual not selected
     	args.usernames = user_add.validateshell(args.usernames, args.defShell)
 	logging.debug(args.usernames)
-	print args.usernames
 
 	attrs=[]
 	
@@ -99,20 +103,19 @@ if args.manual == False:
 	for uname in args.usernames:
 		uname = uname.split(':')
 		attrs.append(ldap_tools.ldapsearch(uname[0],uname[1]))
-	print attrs
 
 # if the user would like to confim user attributes
-if args.confirm==True:
+if args.confirm==True and args.manual == False:
 	# print out user attributes
-	print("\nif confirmed, the following user(s) will be added to idm:")
+	print("\n"+dstring+"if confirmed, the following user(s) will be added to idm (unless --dry-run option specified):")
 
 	for users in attrs:
 		userattrs=("\nusername:\t%s\nfirstname:\t%s\nlastname:\t%s\ndisplayname:\t%s\nemailAddr:\t%s\nuidnumber:\t%s\ngidnumber:\t%s\nphone:\t\t%s\norgunit:\t%s\n\
 title:\t\t%s\nshell:\t\t%s" % (users[0],users[1],users[2],users[3],users[4],users[5],users[6],users[7],users[8],users[9],users[10]))
+		
+		print userattrs
 
-		print userattrs	
-
-	confirm = raw_input("\nAre you sure you wish to add the above user(s) to idm (y/n)? [n]: ")
+	confirm = raw_input("\n"+dstring+"Are you sure you wish to add the above user(s) to idm (y/n)? [n]: ")
 	
 	# verify the user information is confirmed
 	if confirm.lower() != 'y':
@@ -123,3 +126,11 @@ title:\t\t%s\nshell:\t\t%s" % (users[0],users[1],users[2],users[3],users[4],user
 # if not a dry run, add user to idm
 if args.dry == False:
 	idm_manage.addidmusers(attrs)	
+	print ("all users added to idm")
+
+# otherwise, just print what the output would be
+else:
+	idm_manage.printaddidmusers(attrs)
+	print ("no users added to idm, above is what would have be executed\n\n")
+	
+	
