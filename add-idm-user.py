@@ -20,6 +20,7 @@ import argparse
 import logging
 import user_add
 import ldap_tools
+import idm_manage
 
 __version__='1.0'
 
@@ -120,3 +121,5 @@ title:\t\t%s\nshell:\t\t%s" % (users[0],users[1],users[2],users[3],users[4],user
 		exit()
 
 # if not a dry run, add user to idm
+if args.dry == False:
+	idm_manage.addidmusers(attrs)	
