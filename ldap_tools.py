@@ -25,8 +25,7 @@ def ldapsearch(username, shell):
 	logging.debug("\nsearching cn=Users for %s" % username)
 	# search cn=Users for a matching username (most normal UW accounts will be here
 	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
+		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y /root/.holmes/pen name=%s %s' % (username, attributes)
 	
 	logging.debug(ldapcmd)
 	
@@ -48,8 +47,10 @@ def ldapsearch(username, shell):
 	if searchresult == '':	
 		logging.debug("user %s was not found in ldap cn=Users or ou=Special_Accounts" % username)
 		logging.info("Failed to find user %s in AD, abort!" % username)
-		print("user %s not found in AD, abort!" % username)
-		exit()
+		print("user %s not found in AD!" % username)
+		#exit()
+		
+		return "NOUSER"
 	else:
 		searchresult = parseresult(searchresult)	
 		searchresult.append(shell)

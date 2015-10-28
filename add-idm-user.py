@@ -102,8 +102,11 @@ if args.manual == False:
 	# find user ldap entries
 	for uname in args.usernames:
 		uname = uname.split(':')
-		attrs.append(ldap_tools.ldapsearch(uname[0],uname[1]))
-
+		sres = (ldap_tools.ldapsearch(uname[0],uname[1]))
+		
+		if sres != "NOUSER":
+			attrs.append(sres)
+	
 # if the user would like to confim user attributes
 if args.confirm==True and args.manual == False:
 	# print out user attributes

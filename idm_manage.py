@@ -27,11 +27,12 @@ def addidmusers(userlist):
 		else:
 			idmcmd = ("ipa user-add %s --first=\"%s\" --last=\"%s\" --cn=\"%s\" --displayname=\"%s\" --email=\"%s\" --uid=%s --gidnumber=%s --phone=\"%s\" --orgunit=\"%s\" --title=\"%s\"\
  --shell=\"%s\"" % (user[0], user[1], user[2], user[0], user[3], user[4], user[5], user[6], user[7], user[8], user[9], user[10]))
-
+		
+		
+		print (idmcmd + "\n")
 	# run the idm user-add  cmd
-        idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
-        idmaddresult = idmaddresult.communicate()[0]
-
+ 	#idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+        #idmaddresult = idmaddresult.communicate()[0]
 	
 
 
