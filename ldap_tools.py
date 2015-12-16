@@ -96,7 +96,7 @@ def ldapexternal(username):
 	# search ou=External_Collaborator_Users for a matching username
 	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "ou=External_Collaborator_Users,dc=windows,' +\
 		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
+		  ' -y /root/.holmes/pen name=%s %s' % (username, attributes)
 	
 	logging.debug(ldapcmd)
 	
