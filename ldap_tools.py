@@ -154,3 +154,52 @@ def parseresult(ldapstring):
 	logging.debug(attrList)
 
 	return attrList
+
+def ldapgetuid(username):
+	attributes = "uidnumber"
+	logging.debug("\nsearching cn=Users for %s" % username)
+	# search cn=Users for a matching username (most normal UW accounts will be here
+	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
+		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y /root/.holmes/pen name=%s %s' % (username, attributes)
+	
+	logging.debug(ldapcmd)
+
+	# run the ldap cmd
+	searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
+	searchresult = searchresult.communicate()[0]
+	
+	logging.debug("ldapsearch cn=users for %s returned: %s" % (username, searchresult))
+	
+	# no result from ldap search of users
+	if searchresult == '':
+		logging.debug("no result for %s in cn=Users" % username)
+		logging.debug("searching special users for %s" % username)
+	
+		# search special accounts for user
+		searchresult = ldapspecial(username)
+	
+	# no result from ldap search of SpecialAccounts
+	if searchresult == '':
+		logging.debug("no result for %s in ou=Special_Accounts" % username)
+		logging.debug("searching external collaborators for %s" % username)
+	
+		# search special accounts for user
+		searchresult = ldapexternal(username)
+	
+	# no result from ldap search of Special_Accounts
+	if searchresult == '':	
+		logging.debug("user %s was not found in ldap cn=Users or ou=Special_Accounts" % username)
+		logging.info("Failed to find user %s in AD, abort!" % username)
+		print("user %s not found in AD!" % username)
+		#exit()
+		
+		return "NOUSER"
+	else:
+		searchresult = searchresult.split("\n")[1]
+		searchresult = searchresult.split(": ")[1]
+		return searchresult
+	
+	# should not ever get here but if so, exit with error
+	logging.critical("bad ldap search, should not be here")
+	exit()	
+

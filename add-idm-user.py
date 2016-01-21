@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(prog='add-idm-user.py', usage=usage,
 parser.add_argument('--version', action='version', version="%(prog)s "+__version__)
 
 # default arg values
-parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, defShell='bash', manual=False, confirm=True)
+parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, defShell='bash', manual=False, confirm=True, uid=False)
 
 # args
 parser.add_argument(  "-f", "--file", dest="filename", 
@@ -52,6 +52,8 @@ parser.add_argument(  "-n", "--dry-run", action="store_true", dest="dry",
                     help="run but do not add users to idm")
 parser.add_argument(  "-l", "--logfile", dest="logfile", 
                     help="change logfile location")
+parser.add_argument(  "-i", "--uid", action="store_true", dest="uid", 
+                    help="only get user numeric id from active directory")
 parser.add_argument(  "-y", "--no-confirm", action="store_false", dest="confirm", 
                     help="do not confirm user attributes after ldap search")
 parser.add_argument(  "--manual-add", action="store_true", dest="manual", 
@@ -87,6 +89,17 @@ else:
 if args.filename != None: 
     args.usernames = args.usernames + user_add.readusers(args.filename)
     
+# if uid option set, get uids and return
+if args.uid == True:
+	print "[uid]"
+	# find user ldap entries and uids
+	for uname in args.usernames:
+		uname = uname.strip("\n")
+		uname = uname.split(':')
+		sres = (ldap_tools.ldapgetuid(uname[1]))
+		print uname[0]+"="+sres
+	exit()
+
 # verify user args and shell option
 logging.info("validating shell options...")
 logging.debug(args.usernames)
