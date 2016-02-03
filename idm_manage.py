@@ -31,8 +31,8 @@ def addidmusers(userlist):
 		
 		print (idmcmd + "\n")
 	# run the idm user-add  cmd
- 	#idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
-        #idmaddresult = idmaddresult.communicate()[0]
+ 	idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+        idmaddresult = idmaddresult.communicate()[0]
 	
 
 
