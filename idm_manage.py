@@ -47,3 +47,19 @@ def printaddidmusers(userlist):
  --shell=\"/bin/%s\" --user-auth-type=radius --radius=radius-dev.uwyo.edu" % (user[0], user[1], user[2], user[3], user[3], user[4], user[5], user[6], user[7], user[8], user[9], user[10]))
 
 		print "\n"+idmcmd+"\n"
+
+def disableidmusers(userlist):
+        for user in userlist:
+                idmcmd = ("ipa user-disable %s" %user)
+
+                print (idmcmd + "\n")
+
+                # run the idm user-add  cmd
+                idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+                idmaddresult = idmaddresult.communicate()[0]
+
+def printdisableidmusers(userlist):
+        for user in userlist:
+                idmcmd = ("ipa user-disable %s" %(user))
+
+                print (idmcmd + "\n")

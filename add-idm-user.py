@@ -73,10 +73,21 @@ dstring =""
 if args.dry == True:
 	dstring = "--dry-run selected, no changes will be made to idm regardless of confirmation!\n"
 
+
+
+# if --manual-add, and a file is specified, read attributes from file
+# file should be in form:
+# username,firstname,lastname,displayname,email,uid,gid,phone,orgunit,title,shell
+if args.manual == True and args.filename != None:
+	attrs = []
+	fullusers = user_add.readusers(args.filename)
+	for user in fullusers:
+		attrs.append(user.strip('\n').split(','))
+
 # if --manual-add, begin interactive process to add IDM user
-if args.manual==True:
+if args.manual==True and args.filename == None:
     	attrs = []
-	attrs.append( user_add.manualadd(dstring) )
+	attrs.append( user_add.manualadd(dstring))
 
 # verify default shell
 args.defShell = args.defShell.lower()
@@ -88,7 +99,7 @@ else:
     args.defShell='bash'
 
 # import users from file if set
-if args.filename != None: 
+if args.filename != None and args.manual == False: 
     args.usernames = args.usernames + user_add.readusers(args.filename)
 
 man_uids = []
@@ -158,7 +169,7 @@ if args.manid == True:
 	
 	
 # if the user would like to confim user attributes
-if args.confirm==True and args.manual == False:
+if args.confirm==True and (args.manual == False or args.filename != None):
 	# print out user attributes
 	print("\n"+dstring+"if confirmed, the following user(s) will be added to idm (unless --dry-run option specified):")
 
