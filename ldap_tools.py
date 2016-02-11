@@ -41,7 +41,7 @@ def ldapsearch(username, shell):
 		logging.debug("searching special users for %s" % username)
 	
 		# search special accounts for user
-		searchresult = ldapspecial(username)
+		searchresult = ldapspecial(username, attributes)
 	
 	# no result from ldap search of SpecialAccounts
 	if searchresult == '':
@@ -49,7 +49,7 @@ def ldapsearch(username, shell):
 		logging.debug("searching external collaborators for %s" % username)
 	
 		# search special accounts for user
-		searchresult = ldapexternal(username)
+		searchresult = ldapexternal(username, attributes)
 	
 	# no result from ldap search of Special_Accounts
 	if searchresult == '':	
@@ -74,7 +74,7 @@ def ldapsearch(username, shell):
 	logging.critical("bad ldap search, should not be here")
 	exit()	
 
-def ldapspecial(username):
+def ldapspecial(username, attributes):
 	logging.debug("searching ou=Special_Accounts for %s" % username)
 	# search cn=Special_Accounts for a matching username
 	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "ou=Special_Accounts,ou=AdminGROUPS,dc=windows,' +\
@@ -91,7 +91,7 @@ def ldapspecial(username):
 
 	return searchresult
 
-def ldapexternal(username):
+def ldapexternal(username, attributes):
 	logging.debug("searching ou=External_Collaborator_Users for %s" % username)
 	# search ou=External_Collaborator_Users for a matching username
 	ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "ou=External_Collaborator_Users,dc=windows,' +\
@@ -176,7 +176,7 @@ def ldapgetuid(username):
 		logging.debug("searching special users for %s" % username)
 	
 		# search special accounts for user
-		searchresult = ldapspecial(username)
+		searchresult = ldapspecial(username, attributes)
 	
 	# no result from ldap search of SpecialAccounts
 	if searchresult == '':
@@ -184,7 +184,7 @@ def ldapgetuid(username):
 		logging.debug("searching external collaborators for %s" % username)
 	
 		# search special accounts for user
-		searchresult = ldapexternal(username)
+		searchresult = ldapexternal(username, attributes)
 	
 	# no result from ldap search of Special_Accounts
 	if searchresult == '':	

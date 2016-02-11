@@ -36,7 +36,7 @@ parser = argparse.ArgumentParser(prog='add-idm-user.py', usage=usage,
 parser.add_argument('--version', action='version', version="%(prog)s "+__version__)
 
 # default arg values
-parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, defShell='bash', manual=False, confirm=True, uid=False)
+parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, defShell='bash', manual=False, confirm=True, uid=False, manid=False)
 
 # args
 parser.add_argument(  "-f", "--file", dest="filename", 
@@ -54,6 +54,8 @@ parser.add_argument(  "-l", "--logfile", dest="logfile",
                     help="change logfile location")
 parser.add_argument(  "-i", "--uid", action="store_true", dest="uid", 
                     help="only get user numeric id from active directory")
+parser.add_argument(  "--manual-id", action="store_true", dest="manid", 
+                    help="manually add the uid, must have username field in form <username>%<uid>")
 parser.add_argument(  "-y", "--no-confirm", action="store_false", dest="confirm", 
                     help="do not confirm user attributes after ldap search")
 parser.add_argument(  "--manual-add", action="store_true", dest="manual", 
@@ -88,7 +90,29 @@ else:
 # import users from file if set
 if args.filename != None: 
     args.usernames = args.usernames + user_add.readusers(args.filename)
-    
+
+man_uids = []
+# split usernames and uids if manual is set
+if args.manid == True:
+   for n,uname in enumerate(args.usernames):
+	ushell = uname.split(':')
+        uname = ushell[0].split('%')
+	
+	if len(uname) == 2:
+		man_uids.append(uname[1])
+	else:
+		logging.error("error, uid or username not found")
+		exit()
+	
+	if len(ushell) == 2:
+		args.usernames[n] =  uname[0] +":"+ ushell[1]
+		print args.usernames[n]
+	else:
+		args.usernames[n] =  uname[0]
+		print args.usernames[n]
+	
+	print uname
+ 
 # if uid option set, get uids and return
 if args.uid == True:
 	print "[uid]"
@@ -97,7 +121,10 @@ if args.uid == True:
 		uname = uname.strip("\n")
 		uname = uname.split(':')
 		sres = (ldap_tools.ldapgetuid(uname[1]))
-		print uname[0]+"="+sres
+		if sres != "NOUSER":
+			print uname[0]+"="+sres
+		else:
+			print uname[0]+"=-1"
 	exit()
 
 # verify user args and shell option
@@ -119,6 +146,16 @@ if args.manual == False:
 		
 		if sres != "NOUSER":
 			attrs.append(sres)
+		else:
+			if args.manid == True:
+				logging.critical("error, user not found and manid enabled...abort")
+     				exit()
+# if manual ids is on, set input ids
+if args.manid == True:
+	for n,user in enumerate(attrs):
+		attrs[n][5] = man_uids[n]	
+		attrs[n][6] = man_uids[n]	
+	
 	
 # if the user would like to confim user attributes
 if args.confirm==True and args.manual == False:
@@ -139,7 +176,8 @@ title:\t\t%s\nshell:\t\t%s" % (users[0],users[1],users[2],users[3],users[4],user
 		print "user information not confirmed, no changes have been made to idm"
 		exit()
 
-# if not a dry run, add user to idm
+
+# if not a dry run, add users to idm
 if args.dry == False:
 	idm_manage.addidmusers(attrs)	
 	print ("all users added to idm")
