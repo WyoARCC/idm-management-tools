@@ -13,6 +13,7 @@
 #
 #
 # Modified: <initials> <day> <month> <year> <change notes>
+# TA 6 May 2016 modified usage to add-idm-group <groupname> <pi_username> [options]
 #
 ###
 
@@ -24,8 +25,8 @@ __version__='1.0'
 
 # argparser and auto generate help
 
-# add-idm-user usage
-usage = "%(prog)s [<groupname>:<gid>[:<Description>] ]* [options]"
+# add-idm-group usage
+usage = "%(prog)s <groupname> <pi_username> "
 
 parser = argparse.ArgumentParser(prog='add-idm-group.py', usage=usage,
                     description='Add groups (projects) to idm')
@@ -34,13 +35,11 @@ parser = argparse.ArgumentParser(prog='add-idm-group.py', usage=usage,
 parser.add_argument('--version', action='version', version="%(prog)s "+__version__)
 
 # default arg values
-parser.set_defaults(verbose=True,logfile="idm-actions.log", dry=False, manual=False, confirm=True)
+parser.set_defaults(verbose=False,logfile="idm-actions.log", dry=False, manual=False, confirm=True)
 
 # args
-parser.add_argument(  "-f", "--file", dest="filename", 
-                    metavar="FILE", help="add users from FILE")
 parser.add_argument(  "-v","--verbose", action="store_true", dest="verbose", 
-                    help="print status messages to stdout")
+                    help="print additional status messages to stdout")
 parser.add_argument(  "-q", "--quiet", action="store_false", dest="verbose", 
                     help="don't print status messages to stdout")
 parser.add_argument(  "-n", "--dry-run", action="store_true", dest="dry",
@@ -48,15 +47,17 @@ parser.add_argument(  "-n", "--dry-run", action="store_true", dest="dry",
 parser.add_argument(  "-l", "--logfile", dest="logfile", 
                     help="change logfile location")
 parser.add_argument(  "-y", "--no-confirm", action="store_false", dest="confirm", 
-                    help="do not confirm user attributes after ldap search")
-parser.add_argument(  "--manual-add", action="store_true", dest="manual", 
-                    help="manually add user not in AD (be careful)")
+                    help="do not confirm group attributes")
 parser.add_argument(  'groupnames', nargs='*')
 
 # create parser
 args = parser.parse_args()
 
-logging.basicConfig(format='%(asctime)s :: %(message)s', level=logging.CRITICAL)
+loglevel="CRITICAL"
+if args.verbose == True:
+	loglevel="INFO"
+
+logging.basicConfig(format='%(asctime)s :: %(message)s', level=loglevel)
 logging.info("START")
 logging.debug(args)
 
@@ -64,24 +65,25 @@ dstring =""
 if args.dry == True:
 	dstring = "--dry-run selected, no changes will be made to idm regardless of confirmation!\n"
 
-# if --manual-add, begin interactive process to add IDM group
-
-# import groups from file if set
-if args.filename != None: 
-    args.groupnames = args.groupnames
-
 # add groups in groupnames list
 if args.groupnames:
+	grouplist = []
 	
+	# parse the group entries and attributes
 	for group in args.groupnames:
 		group = group.split(':')
 		
 		group.append("")
 		
-		if len(group) != 3:
-			print "error not missing group attribute"
+		if len(group) < 3:
+			print "error, missing group attribute"
 	
-		print group[0] +" " + group[1] + " " + group[2]
+		else:
+			grouplist.append(group)
+	
+
+	# add the group entries in idm
+	idm_manage.addidmgroup(grouplist)
 		 
 else:
 	print "No groups set to be added"

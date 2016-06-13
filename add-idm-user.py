@@ -55,7 +55,7 @@ parser.add_argument(  "-l", "--logfile", dest="logfile",
 parser.add_argument(  "-i", "--uid", action="store_true", dest="uid", 
                     help="only get user numeric id from active directory")
 parser.add_argument(  "--manual-id", action="store_true", dest="manid", 
-                    help="manually add the uid, must have username field in form <username>%<uid>")
+                    help="manually add the uid, must have username field in form <user_name>:<uid>")
 parser.add_argument(  "-y", "--no-confirm", action="store_false", dest="confirm", 
                     help="do not confirm user attributes after ldap search")
 parser.add_argument(  "--manual-add", action="store_true", dest="manual", 

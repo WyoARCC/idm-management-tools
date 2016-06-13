@@ -63,3 +63,29 @@ def printdisableidmusers(userlist):
                 idmcmd = ("ipa user-disable %s" %(user))
 
                 print (idmcmd + "\n")
+
+def updateidmusers(userlist):
+        for user in userlist:
+        	idmcmd = ("ipa user-mod %s %s" % (user[0], user[1]))
+
+                print (idmcmd + "\n")
+
+                # run the idm user-add  cmd
+                idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+                idmaddresult = idmaddresult.communicate()[0]
+
+def printupdateidmusers(userlist):
+        for user in userlist:
+        	idmcmd = ("ipa user-mod %s %s" % (user[0], user[1]))
+
+                print (idmcmd + "\n")
+
+def addidmgroup(grouplist):
+        for group in grouplist:
+                idmcmd = ("ipa group-add %s --gid=%s --desc=\"%s\"" % (group[0], group[1], group[2]))
+
+                print (idmcmd + "\n")
+
+                # run the idm user-add  cmd
+                idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+                idmaddresult = idmaddresult.communicate()[0]
