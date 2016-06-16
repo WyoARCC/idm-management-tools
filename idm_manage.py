@@ -80,12 +80,20 @@ def printupdateidmusers(userlist):
 
                 print (idmcmd + "\n")
 
-def addidmgroup(grouplist):
-        for group in grouplist:
-                idmcmd = ("ipa group-add %s --gid=%s --desc=\"%s\"" % (group[0], group[1], group[2]))
+def addidmgroup(groupname, gid, piname, projdesc):
+	idmcmd = ("ipa group-add %s --gid=%s --desc=\'%s:\"%s\"\'" % (groupname, gid, piname, projdesc))
 
-                print (idmcmd + "\n")
+	print (idmcmd + "\n")
 
-                # run the idm user-add  cmd
-                idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
-                idmaddresult = idmaddresult.communicate()[0]
+	# run the idm user-add  cmd
+	idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+	idmaddresult = idmaddresult.communicate()[0]
+
+def addyubikey(username, yubikeyid):
+	idmcmd = ("ipa user-mod  %s --fax=%s" % (username, yubikeyid))
+
+	print (idmcmd + "\n")
+	
+	idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+        idmaddresult = idmaddresult.communicate()[0]
+

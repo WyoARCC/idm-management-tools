@@ -20,13 +20,14 @@
 import argparse
 import logging
 import idm_manage
+import get_group_info as grpinfo
 
 __version__='1.0'
 
 # argparser and auto generate help
 
 # add-idm-group usage
-usage = "%(prog)s <groupname> <pi_username> "
+usage = "%(prog)s <groupname> <pi_username> <proj_description>"
 
 parser = argparse.ArgumentParser(prog='add-idm-group.py', usage=usage,
                     description='Add groups (projects) to idm')
@@ -48,7 +49,9 @@ parser.add_argument(  "-l", "--logfile", dest="logfile",
                     help="change logfile location")
 parser.add_argument(  "-y", "--no-confirm", action="store_false", dest="confirm", 
                     help="do not confirm group attributes")
-parser.add_argument(  'groupnames', nargs='*')
+parser.add_argument(  'groupname', nargs='+')
+parser.add_argument(  'piname', nargs='+')
+parser.add_argument(  'projdesc', nargs='+')
 
 # create parser
 args = parser.parse_args()
@@ -65,31 +68,8 @@ dstring =""
 if args.dry == True:
 	dstring = "--dry-run selected, no changes will be made to idm regardless of confirmation!\n"
 
-# add groups in groupnames list
-if args.groupnames:
-	grouplist = []
-	
-	# parse the group entries and attributes
-	for group in args.groupnames:
-		group = group.split(':')
-		
-		group.append("")
-		
-		if len(group) < 3:
-			print "error, missing group attribute"
-	
-		else:
-			grouplist.append(group)
-	
-
-	# add the group entries in idm
-	idm_manage.addidmgroup(grouplist)
-		 
-else:
-	print "No groups set to be added"
-
-
-
+# add the group entries in idm
+idm_manage.addidmgroup(args.groupname[0], grpinfo.getNextProj(), args.piname[0], args.projdesc[0])
 
 
 

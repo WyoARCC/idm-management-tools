@@ -50,7 +50,14 @@ def ldapsearch(username, shell):
 	
 		# search special accounts for user
 		searchresult = ldapexternal(username, attributes)
-	
+        # no result from ldap search of SpecialAccounts
+        if searchresult == '':
+                logging.debug("no result for %s in ou=External_Accounts" % username)
+                logging.debug("searching TRAIN for %s" % username)
+
+                # search special accounts for user
+                searchresult = ldaptrain(username, attributes)	
+
 	# no result from ldap search of Special_Accounts
 	if searchresult == '':	
 		logging.debug("user %s was not found in ldap cn=Users or ou=Special_Accounts" % username)
@@ -90,6 +97,23 @@ def ldapspecial(username, attributes):
 	logging.debug("ldap cn=Special_Accounts for %s returned: %s" % (username, searchresult))
 
 	return searchresult
+
+def ldaptrain(username, attributes):
+        logging.debug("searching ou=TRAIN for %s" % username)
+        # search cn=TRAIN for a matching username
+        ldapcmd = 'ldapsearch -LLL -H ldaps://windows.uwyo.edu -x -b "ou=TRAIN,ou=AdminGROUPS,dc=windows,' +\
+                  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
+                  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
+
+        logging.debug(ldapcmd)
+
+        # run the ldap cmd
+        searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
+        searchresult = searchresult.communicate()[0]
+
+        logging.debug("ldap ou=TRAIN for %s returned: %s" % (username, searchresult))
+
+        return searchresult
 
 def ldapexternal(username, attributes):
 	logging.debug("searching ou=External_Collaborator_Users for %s" % username)
