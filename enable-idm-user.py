@@ -2,14 +2,14 @@
 
 ###
 #
-# disable-idm-user.py
+# enable-idm-user.py
 #
 # Troy Axthelm
 # Advanced Research Computing Center
 # University of Wyoming
 # troy.axthelm@uwyo.edu
 #
-# Created: 14 October 2015
+# Created: 16 June 2016
 #
 #
 # Modified: <initials> <day> <month> <year> <change notes>
@@ -28,10 +28,10 @@ __version__='1.0'
 
 # argparser and auto generate help
 
-# add-idm-user usage
+# enable-idm-user usage
 usage = "%(prog)s [<username>]* [options]"
 
-parser = argparse.ArgumentParser(prog='disable-idm-user.py', usage=usage,
+parser = argparse.ArgumentParser(prog='enable-idm-user.py', usage=usage,
                     description='disable idm users')
 
 # version
@@ -87,12 +87,11 @@ for user in args.usernames:
 	users.append(user.strip('\n'))
 # if not a dry run, disable users in idm
 if args.dry == False:
-	idm_manage.disableidmusers(users)	
-	print ("all users disabled in idm")
+	idm_manage.enableidmusers(users)	
+	print ("all users enabled in idm")
 
 # otherwise, just print what the output would be
 else:
-	idm_manage.printdisableidmusers(users)
-	print ("no users disabled in idm, above is what would have be executed\n\n")
-	
+	idm_manage.printenableidmusers(users)
+	print ("no users enabled in idm, above is what would have be executed\n\n")
 	

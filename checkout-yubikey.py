@@ -16,6 +16,8 @@
 #
 ###
 
+import sys
+sys.path.insert(0, '/root/idm-management-tools/lib/')
 import logging
 import subprocess
 import idm_manage

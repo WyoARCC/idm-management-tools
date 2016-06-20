@@ -64,6 +64,23 @@ def printdisableidmusers(userlist):
 
                 print (idmcmd + "\n")
 
+def enableidmusers(userlist):
+        for user in userlist:
+                idmcmd = ("ipa user-enable %s" %user)
+
+                print (idmcmd + "\n")
+
+                # run the idm user-add  cmd
+                idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+                idmaddresult = idmaddresult.communicate()[0]
+
+def printenableidmusers(userlist):
+        for user in userlist:
+                idmcmd = ("ipa user-enable %s" %(user))
+
+                print (idmcmd + "\n")
+
+
 def updateidmusers(userlist):
         for user in userlist:
         	idmcmd = ("ipa user-mod %s %s" % (user[0], user[1]))
@@ -90,7 +107,7 @@ def addidmgroup(groupname, gid, piname, projdesc):
 	idmaddresult = idmaddresult.communicate()[0]
 
 def addyubikey(username, yubikeyid):
-	idmcmd = ("ipa user-mod  %s --fax=%s" % (username, yubikeyid))
+	idmcmd = ("ipa user-mod  %s --addattr=fax=%s" % (username, yubikeyid))
 
 	print (idmcmd + "\n")
 	

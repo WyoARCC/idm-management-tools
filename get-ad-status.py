@@ -16,6 +16,8 @@
 #
 ###
 
+import sys
+sys.path.insert(0, '/root/idm-management-tools/lib/')
 import argparse
 import logging
 import user_add
@@ -63,10 +65,13 @@ if args.dry == True:
 	dstring = "--dry-run selected, no changes will be made to idm regardless of confirmation!\n"
 
 userattrs = []
+notfound = []
 # pull user attributes from AD with ldap query
 for user in args.usernames:
 	sres = ldap_tools.ldapsearch(user, 'bash')
 	if sres != 'NOUSER':	
 		userattrs.append(sres)
 	else:
-		print user
+		notfound.append(user)
+
+print userattrs
