@@ -21,27 +21,27 @@ import operator
 import subprocess
 
 def getNextProj():
-	#ldapcmd = "ldapsearch -LLL -x -h arccidm1.arcc.uwyo.edu -b 'cn=groups,cn=accounts,dc=arcc,dc=uwyo,dc=edu' gidNumber cn"
+    #ldapcmd = "ldapsearch -LLL -x -h arccidm1.arcc.uwyo.edu -b 'cn=groups,cn=accounts,dc=arcc,dc=uwyo,dc=edu' gidNumber cn"
       
-        ipacmd = "ipa group-find --posix | grep GID: | cut -d : -f 2 | sed 's/^[[:space:]]*//' | sort" 
+    ipacmd = "ipa group-find --posix | grep GID: | cut -d : -f 2 | sed 's/^[[:space:]]*//' | sort" 
 
-	logging.debug(ipacmd)
+    logging.debug(ipacmd)
 
-	# run the ldap cmd
-	searchresult = subprocess.Popen(ipacmd, stdout=subprocess.PIPE, shell=True)
-	searchresult = searchresult.communicate()[0].split()
+    # run the ldap cmd
+    searchresult = subprocess.Popen(ipacmd, stdout=subprocess.PIPE, shell=True)
+    searchresult = searchresult.communicate()[0].split()
 
-	# lists to keep different group members
-	projgrp=[]
+    # lists to keep different group members
+    projgrp=[]
     
-	gid=""
+    gid=""
 
-	# parse the results, get the cn and gidNumber for each entry, some gidNuber will be empty
-	for gid in searchresult:
-		if gid != "":
-			if int(gid) >= 6000000 and int(gid) <= 6999999:
-				projgrp.append(gid)
-	# sort the project group by GID (ascending order)
-	projgrp.sort()
+    # parse the results, get the cn and gidNumber for each entry, some gidNuber will be empty
+    for gid in searchresult:
+        if gid != "":
+            if int(gid) >= 6000000 and int(gid) <= 6999999:
+                projgrp.append(gid)
+    # sort the project group by GID (ascending order)
+    projgrp.sort()
 
-	return int(projgrp[-1])+1
+    return int(projgrp[-1])+1
