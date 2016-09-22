@@ -38,6 +38,8 @@ VERBOSE = False
 DRYRUN  = False
 DEBUG   = 0
 
+gid_select = 'legacy'
+
 
 # Usage Statement
 #usage = "%(prog)s <groupname> <pi_username> <proj_description>"
@@ -90,7 +92,7 @@ if args.verbose:
 	idm_manage.VERBOSE,VERBOSE = True,True
 
 logging.basicConfig(format='%(asctime)s :: %(message)s', level=loglevel)
-logging.info("START")
+#logging.info("START")
 logging.debug(args)
 
 dstring =""
@@ -99,9 +101,13 @@ if args.dry:
         idm_manage.DRYRUN,DRYRUN = True,True
 
 # add the group entries in idm
+gid = {}
+#gid['orig'] = grpinfo.getNextProj()
+gid['legacy'] = grpinfo.get_next_proj_gid(legacy=True)
+gid['best']   = grpinfo.get_next_proj_gid(legacy=False)
+
 idm_manage.addidmgroup( args.groupname[0], 
-                        grpinfo.getNextProj(), 
+                        gid[gid_select], 
                         args.piname[0], 
                         args.projdesc[0],
                         args.cluster )
-

@@ -112,10 +112,45 @@ def printupdateidmusers(userlist):
         idmcmd = ("ipa user-mod %s %s" % (user[0], user[1]))
         print (idmcmd + "\n")
 
-def addidmgroup(groupname, gid, piname, projdesc, cluster=""):
-    #global VERBOSE,DRYRUN,DEBUG
+def check_group_name(groupname):
+    idmcmd = "ipa group-show {}".format(groupname)
+    if VERBOSE:
+        print(":: Checking Group Name")
+        print(":: IdM Command")
+        print("  " + idmcmd)
+        print("")
 
-    idmcmd = "ipa group-add %s --gid=%s --desc=\'%s:\"%s\"\'" % (groupname, gid, piname, projdesc)
+    idm_result = subprocess.Popen(idmcmd.split(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    out,err = idm_result.communicate()
+    rc = idm_result.returncode
+
+    return rc
+
+def verify_group_add(groupname):
+    idmcmd = "ipa group-show {}".format(groupname)
+    idm_result = subprocess.Popen(idmcmd.split(),stdout=subprocess.PIPE,stderr=subprocess.PIPE)
+    out,err = idm_result.communicate()
+    rc = idm_result.returncode
+    if 0 != rc:
+        print("WARNING: Not yet synced, check again")
+    return rc
+    
+
+
+def addidmgroup(groupname, gid, piname, projdesc, cluster=""):
+    rc = 0
+
+    valid = check_group_name(groupname)
+    if not valid: 
+        print("ERROR: The group '{}' already exist!. Aborting".format(groupname)) 
+        return valid
+    if 2 == valid and VERBOSE:
+        print("The group '{}' is not already allocated.".format(groupname))
+    else:
+        print("WARNING: Unknown exit code from IPA")
+
+    # Add a new group to IPA
+    idmcmd = "ipa group-add {} --gid={} --desc=\'{}:\"{}\"\'".format(groupname, gid, piname, projdesc)
 
     if VERBOSE:
         print(":: Project Information")
@@ -127,39 +162,88 @@ def addidmgroup(groupname, gid, piname, projdesc, cluster=""):
         print("  " + idmcmd)
         print("")
 
-    if cluster != "":
-        add_group_to_cluster(cluster=cluster,groupname=groupname)
-    else:
+    if cluster == "":
         info("cluster name not added, you'll need to manually add one later.")
+    
+    if not DRYRUN:
 
-    if DRYRUN: return
+        cmd = idmcmd.split(" ",4)
+        #print(cmd)
 
-    # run the idm user-add  cmd
-    idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
-    idmaddresult = idmaddresult.communicate()[0]
+        idmaddresult = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out,err= idmaddresult.communicate()
+        #print("")
+        #print(out)
+        #print("")
+        rc = idmaddresult.returncode
+        if 0 == rc and VERBOSE:
+            print(":: Status = Success({})".format(rc))
+        if 0 != rc:
+            print("ERROR: IPA return code = {}".format(rc))
+            print(out)
+            print(err)
+
+
+        if VERBOSE:
+            print(":: Verification")
+        verify = verify_group_add(groupname)
+        print(verify)
+        i=0
+        while verify != 0 and i < 9:
+            verify = verify_group_add(groupname)
+            i += 1
+            print(i)
+
+        if 0 != verify:
+            print("WARNING: Unable to verify the group. Check manually!")
+    
+        elif verify == 0 and VERBOSE:
+            print("  Success")
+
+    cluster_rc = add_group_to_cluster(cluster=cluster,groupname=groupname)
+
+    return rc
+
+
+def check_cluster_group(cluster=""):
+    if "" == cluster: return
+    error = check_group_name(cluster)
+    if error:
+        print("WARNING: the cluster '{}' does not exist. Ignoring.".format(cluster))
+        return error
+    return error
+
 
 def add_group_to_cluster(cluster="",groupname=""):
 
     if cluster == "":
-        return None
+        return 0
     else:
-        idmcmd = "ipa group-add-member %s --groups=\"%s\"" % (cluster,groupname)
+        idmcmd = "ipa group-add-member {} --groups=\"{}\"".format(cluster,groupname)
 
-    # TODO Verify that the "cluster" group exist ...
+    error = check_cluster_group(cluster)
+    if error: return error
 
     if VERBOSE:
         print(":: Cluster Information")
-        print("  Cluster: %s" % (cluster))
+        print("  Cluster: {}".format(cluster))
         print(":: IdM Command")
-        print("  " + idmcmd)
+        print("  {}".format(idmcmd))
         print("")
 
-    if DRYRUN: return
+    if DRYRUN: return 0
 
-    idm_result = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
-    idm_result = idm_result.communicate()[0]
+    #idm_result = subprocess.Popen(idmcmd.split(), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    idm_result = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True)
+    out,err = idm_result.communicate()
+    rc = idm_result.returncode
+    print("")
+    print(rc)
+    print(out)
+    print(err)
+    print("")
 
-    return None
+    return rc
 
 def addyubikey(username, yubikeyid):
     idmcmd = ("ipa user-mod  %s --addattr=fax=%s" % (username, yubikeyid))
