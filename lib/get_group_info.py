@@ -130,6 +130,8 @@ def get_avail_gid(ldap=False):
             GID.append(i)
             # break # Break on first value
     GID.append(gid_list[-1]+1)
+
+    #print(GID)
     
     # Storing GID as a module global, don't return anything
     return None

@@ -150,7 +150,7 @@ def addidmgroup(groupname, gid, piname, projdesc, cluster=""):
         print("WARNING: Unknown exit code from IPA")
 
     # Add a new group to IPA
-    idmcmd = "ipa group-add {} --gid={} --desc=\'{}:\"{}\"\'".format(groupname, gid, piname, projdesc)
+    idmcmd = "ipa group-add {} --gid={} --desc={}:\"{}\"".format(groupname, gid, piname, projdesc)
 
     if VERBOSE:
         print(":: Project Information")
