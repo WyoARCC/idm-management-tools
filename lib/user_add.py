@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 ###
 #
 # user_add.py
