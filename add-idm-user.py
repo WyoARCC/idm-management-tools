@@ -1,5 +1,4 @@
-#!/usr/bin/python
-
+#!/usr/bin/env python
 ###
 #
 # add-idm-user.py
@@ -17,9 +16,11 @@
 ###
 
 import sys
-sys.path.insert(0, '/root/idm-management-tools/lib/')
 import argparse
 import logging
+
+sys.path.insert(0,"./lib/")
+
 import user_add
 import ldap_tools
 import idm_manage

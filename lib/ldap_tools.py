@@ -22,11 +22,13 @@ __version__='1.0'
 
 attributes = "givenname sn name displayname mail uidnumber gidnumber telephonenumber department title"
 
+PASSWD_FILE = "~/.holmes/pen"
+
 def ldapsearch(username, shell):
 	logging.debug("\nsearching cn=Users for %s" % username)
 	# search cn=Users for a matching username (most normal UW accounts will be here
 	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y /root/.holmes/pen name=%s %s' % (username, attributes)
+		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y %s name=%s %s' % (PASSWD_FILE,username, attributes)
 	
 	logging.debug(ldapcmd)
 	
@@ -121,7 +123,7 @@ def ldapexternal(username, attributes):
 	# search ou=External_Collaborator_Users for a matching username
 	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "ou=External_Collaborator_Users,dc=windows,' +\
 		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y /root/.holmes/pen name=%s %s' % (username, attributes)
+		  ' -y %s name=%s %s' % (PASSWD_FILE,username, attributes)
 	
 	logging.debug(ldapcmd)
 	
@@ -185,7 +187,7 @@ def ldapgetuid(username):
 	logging.debug("\nsearching cn=Users for %s" % username)
 	# search cn=Users for a matching username (most normal UW accounts will be here
 	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y /root/.holmes/pen name=%s %s' % (username, attributes)
+		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y %s name=%s %s' % (PASSWD_FILE,username, attributes)
 	
 	logging.debug(ldapcmd)
 
