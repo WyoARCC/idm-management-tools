@@ -246,6 +246,38 @@ def add_group_to_cluster(cluster="",groupname=""):
 
     return rc
 
+def adduserstogroup(userlist, groupname):
+    # Can't have braces in command when adding one user.
+    if len(userlist) == 1:
+        users = userlist[0]
+    else:
+        users = '{' + ','.join(userlist) + '}'
+
+    idmcmd = ("ipa group-add-member %s --users=%s" % (groupname, users))
+
+    print (idmcmd + "\n")
+
+    idmaddresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+    idmaddresult = idmaddresult.communicate()[0]
+
+    print idmaddresult + "\n"
+    
+def removeusersfromgroup(userlist, groupname):
+    if len(userlist) == 1:
+            users = userlist[0]
+    else:
+        users = '{' + ','.join(userlist) + '}'
+    idmcmd = ("ipa group-remove-member %s --users=%s" % (groupname, users))
+
+    print (idmcmd + "\n")
+
+    idmremoveresult = subprocess.Popen(idmcmd, stdout=subprocess.PIPE, shell=True)
+    idmremoveresult = idmremoveresult.communicate()[0]
+    
+    print idmremoveresult + "\n"
+
+
+
 def addyubikey(username, yubikeyid):
     idmcmd = ("ipa user-mod  %s --addattr=fax=%s" % (username, yubikeyid))
 
