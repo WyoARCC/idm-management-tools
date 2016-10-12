@@ -156,5 +156,5 @@ if __name__ == "__main__":
                         level=logging.INFO)
     for each in sys.argv[1:]:
         print(ldapsearch(each))
-        print(ldapgetuid(each))
+        #print(ldapgetuid(each))
 
