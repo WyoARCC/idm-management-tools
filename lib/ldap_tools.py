@@ -12,221 +12,149 @@
 #
 #
 # Modified: <initials> <day> <month> <year> <change notes>
+# JDB 2016.10.12 Shortened the code dramatically.
 #
 ###
-
+import os
+import sys
+from collections import OrderedDict
 import logging
 import subprocess
 
-__version__='1.0'
+__version__='1.1'
 
-attributes = "givenname sn name displayname mail uidnumber gidnumber telephonenumber department title"
+attributes = ( "givenname sn name displayname mail "
+               "uidnumber gidnumber telephonenumber department title" )
 
-PASSWD_FILE = "~/.holmes/pen"
+# Search for the LDAP Password File in special locations
+PASSWD_LIST = [os.getenv('HOME') + "/.holmes/pen",
+               "/root/.holmes/pen"]
+for i in PASSWD_LIST:
+    if os.path.isfile(i):
+        PASSWD_FILE = i
+        break
 
-def ldapsearch(username, shell):
-	logging.debug("\nsearching cn=Users for %s" % username)
-	# search cn=Users for a matching username (most normal UW accounts will be here
-	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y %s name=%s %s' % (PASSWD_FILE,username, attributes)
-	
-	logging.debug(ldapcmd)
-	
-	# run the ldap cmd
-	searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
-	searchresult = searchresult.communicate()[0]
+# LDAP Base
+LDAP_DOMAIN = "windows.uwyo.edu"
+LDAP_DC = "dc=%s,dc=%s,dc=%s" % tuple(LDAP_DOMAIN.split("."))
+LDAP_URI = "ldap://%s" % (LDAP_DOMAIN)
+LDAP_BINDDN = ("cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,"
+               "%s " % (LDAP_DC))
 
-	logging.debug("ldapsearch cn=users for %s returned: %s" % (username, searchresult))
-	
-	# no result from ldap search of users
-	if searchresult == '':
-		logging.debug("no result for %s in cn=Users" % username)
-		logging.debug("searching special users for %s" % username)
-	
-		# search special accounts for user
-		searchresult = ldapspecial(username, attributes)
-	
-	# no result from ldap search of SpecialAccounts
-	if searchresult == '':
-		logging.debug("no result for %s in ou=Special_Accounts" % username)
-		logging.debug("searching external collaborators for %s" % username)
-	
-		# search special accounts for user
-		searchresult = ldapexternal(username, attributes)
-        # no result from ldap search of SpecialAccounts
-        if searchresult == '':
-                logging.debug("no result for %s in ou=External_Accounts" % username)
-                logging.debug("searching TRAIN for %s" % username)
+LDAP = ("ldapsearch -LLL -x " +
+        "-H \"%s\" " % (LDAP_URI) +
+        "-y \"%s\" " % (PASSWD_FILE) +
+        "-D \"%s\" " % (LDAP_BINDDN) +
+        "-b \"%%s,%s\" " % (LDAP_DC)
+       )
 
-                # search special accounts for user
-                searchresult = ldaptrain(username, attributes)	
+# Search Areas of AD
+AREAS = OrderedDict()
+AREAS['users'] = ("cn=Users","General Users")
+AREAS['train'] = ("ou=TRAIN,ou=AdminGROUPS", "Training Users")
+AREAS['special'] = ("ou=Special_Accounts,ou=AdminGROUPS", "Special Users")
+AREAS['extern'] = ("ou=External_Collaborator_Users", "External Collaborators")
 
-	# no result from ldap search of Special_Accounts
-	if searchresult == '':	
-		logging.debug("user %s was not found in ldap cn=Users or ou=Special_Accounts" % username)
-		logging.info("Failed to find user %s in AD, abort!" % username)
-		print("user %s not found in AD!" % username)
-		#exit()
-		
-		return "NOUSER"
-	else:
-		searchresult = parseresult(searchresult)	
-		searchresult.append(shell)
-		
-		#verify that name, gid, uid all have values
-		if searchresult[0] == '' or searchresult[5] == '' or searchresult[6] == '':
-			logging.critical("no value for [name | gid | uid]")
-			exit()	
-	
-		return searchresult
-	
-	# should not ever get here but if so, exit with error
-	logging.critical("bad ldap search, should not be here")
-	exit()	
+# Validation
+#print(LDAP % (AREAS['users']))
+#print(LDAP % (AREAS['train']))
+#print(LDAP % (AREAS['special']))
+#print(LDAP % (AREAS['extern']))
 
-def ldapspecial(username, attributes):
-	logging.debug("searching ou=Special_Accounts for %s" % username)
-	# search cn=Special_Accounts for a matching username
-	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "ou=Special_Accounts,ou=AdminGROUPS,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
-	
-	logging.debug(ldapcmd)
-	
-	# run the ldap cmd
-	searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
-	searchresult = searchresult.communicate()[0]
-	
-	logging.debug("ldap cn=Special_Accounts for %s returned: %s" % (username, searchresult))
+def ldapsearch(username, shell="/bin/bash"):
 
-	return searchresult
-
-def ldaptrain(username, attributes):
-        logging.debug("searching ou=TRAIN for %s" % username)
-        # search cn=TRAIN for a matching username
-        ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "ou=TRAIN,ou=AdminGROUPS,dc=windows,' +\
-                  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-                  ' -y ~/.holmes/pen name=%s %s' % (username, attributes)
-
+    for key in AREAS.keys():
+        logging.info("Searching in %s." % (AREAS[key][1]))
+        ldapcmd = "%s name=%s %s." % ( LDAP%AREAS[key][0],username,attributes)
         logging.debug(ldapcmd)
 
         # run the ldap cmd
-        searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
+        searchresult = subprocess.Popen(ldapcmd, 
+                                        stdout=subprocess.PIPE,
+                                        shell=True)
+
         searchresult = searchresult.communicate()[0]
 
-        logging.debug("ldap ou=TRAIN for %s returned: %s" % (username, searchresult))
+        if searchresult:
+            logging.info("Found user, %s, in %s." % (username,AREAS[key][1]))
+            break
 
-        return searchresult
+    if not searchresult: return "NOUSER"
 
-def ldapexternal(username, attributes):
-	logging.debug("searching ou=External_Collaborator_Users for %s" % username)
-	# search ou=External_Collaborator_Users for a matching username
-	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "ou=External_Collaborator_Users,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+\
-		  ' -y %s name=%s %s' % (PASSWD_FILE,username, attributes)
-	
-	logging.debug(ldapcmd)
-	
-	# run the ldap cmd
-	searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
-	searchresult = searchresult.communicate()[0]
-	
-	logging.debug("ldap ou=External_Collborator_Users for %s returned: %s" % (username, searchresult))
+    result = parseresult(searchresult)
+    result.append(shell)
 
-	return searchresult
+    if ( result[0] == '' or result[5] == '' or result[6] == '' ):
+        logging.critical("no value for [name | gid | uid]")
+        sys.exit(2)    
+    
+    return result
+    
+    # should not ever get here but if so, exit with error
+    logging.critical("bad ldap search, should not be here")
+    sys.exit(1)    
 
 def parseresult(ldapstring):
-	attrlist = ldapstring.split("\n")
- 	
-	name=''
-	givenname=''
-	sn=''
-	displayname=''
-	mail=''
-	uidnumber=''
-	gidnumber=''
-	telephonenumber=''
-	department=''
-	title='' 
-	
-	for element in attrlist:
-		element = element.split(": ")
-		
-		if element[0].lower() =='dn':
-			logging.debug("recognized returned ldap string")
-		elif element[0].lower() == 'name':
-			name = element[1].lower()	
-		elif element[0].lower() == 'givenname':	
-			givenname = element[1]	
-		elif element[0].lower() == 'sn':	
-			sn = element[1]	
-		elif element[0].lower() == 'displayname':	
-			displayname = element[1]	
-		elif element[0].lower() == 'mail':	
-			mail = element[1].lower()	
-		elif element[0].lower() == 'uidnumber':	
-			uidnumber = element[1]	
-		elif element[0].lower() == 'gidnumber':	
-			gidnumber = element[1]	
-		elif element[0].lower() == 'telephonenumber':	
-			telephonenumber = element[1]	
-		elif element[0].lower() == 'department':	
-			department = element[1]	
-		elif element[0].lower() == 'title':	
-			title = element[1]
 
-	attrList = [name, givenname, sn, displayname, mail, uidnumber, gidnumber,  telephonenumber, department, title]
-	
-	logging.debug("Values parsed for %s: " % name)
-	logging.debug(attrList)
+    attrlist = ldapstring.split("\n")
+    name=''
+    givenname=''
+    sn=''
+    displayname=''
+    mail=''
+    uidnumber=''
+    gidnumber=''
+    telephonenumber=''
+    department=''
+    title=''
+    
+    for element in attrlist:
+        element = element.split(": ")
+        
+        if element[0].lower() =='dn':
+            logging.debug("recognized returned ldap string")
+        elif element[0].lower() == 'name':
+            name = element[1].lower()
+        elif element[0].lower() == 'givenname':
+            givenname = element[1]
+        elif element[0].lower() == 'sn':    
+            sn = element[1]
+        elif element[0].lower() == 'displayname':
+            displayname = element[1]
+        elif element[0].lower() == 'mail':
+            mail = element[1].lower()
+        elif element[0].lower() == 'uidnumber':
+            uidnumber = element[1]
+        elif element[0].lower() == 'gidnumber':
+            gidnumber = element[1]
+        elif element[0].lower() == 'telephonenumber':
+            telephonenumber = element[1]
+        elif element[0].lower() == 'department':
+            department = element[1]
+        elif element[0].lower() == 'title':
+            title = element[1]
 
-	return attrList
+    attrList = [name, givenname, sn, displayname, 
+                mail, uidnumber, gidnumber,  telephonenumber, 
+                department, title]
+    
+    logging.debug("Values parsed for %s: " % name)
+    logging.debug(attrList)
+
+    return attrList
 
 def ldapgetuid(username):
-	attributes = "uidnumber"
-	logging.debug("\nsearching cn=Users for %s" % username)
-	# search cn=Users for a matching username (most normal UW accounts will be here
-	ldapcmd = 'ldapsearch -LLL -H ldap://windows.uwyo.edu -x -b "cn=Users,dc=windows,' +\
-		  'dc=uwyo,dc=edu" -D "cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,dc=windows,dc=uwyo,dc=edu"'+ ' -y %s name=%s %s' % (PASSWD_FILE,username, attributes)
-	
-	logging.debug(ldapcmd)
 
-	# run the ldap cmd
-	searchresult = subprocess.Popen(ldapcmd, stdout=subprocess.PIPE, shell=True)
-	searchresult = searchresult.communicate()[0]
-	
-	logging.debug("ldapsearch cn=users for %s returned: %s" % (username, searchresult))
-	
-	# no result from ldap search of users
-	if searchresult == '':
-		logging.debug("no result for %s in cn=Users" % username)
-		logging.debug("searching special users for %s" % username)
-	
-		# search special accounts for user
-		searchresult = ldapspecial(username, attributes)
-	
-	# no result from ldap search of SpecialAccounts
-	if searchresult == '':
-		logging.debug("no result for %s in ou=Special_Accounts" % username)
-		logging.debug("searching external collaborators for %s" % username)
-	
-		# search special accounts for user
-		searchresult = ldapexternal(username, attributes)
-	
-	# no result from ldap search of Special_Accounts
-	if searchresult == '':	
-		logging.debug("user %s was not found in ldap cn=Users or ou=Special_Accounts" % username)
-		logging.info("Failed to find user %s in AD, abort!" % username)
-		print("user %s not found in AD!" % username)
-		#exit()
-		
-		return "NOUSER"
-	else:
-		searchresult = searchresult.split("\n")[1]
-		searchresult = searchresult.split(": ")[1]
-		return searchresult
-	
-	# should not ever get here but if so, exit with error
-	logging.critical("bad ldap search, should not be here")
-	exit()	
+    result = ldapsearch(username)
+    if result != 'NOUSER': return int(result[5])
+    
+    logging.critical("Unable to find UID for %s." % (username))
+    return -1
+
+if __name__ == "__main__":
+    logging.basicConfig(format='%(levelname)s: %(message)s',
+                        level=logging.INFO)
+    for each in sys.argv[1:]:
+        print(ldapsearch(each))
+        print(ldapgetuid(each))
 
