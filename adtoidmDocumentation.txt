@@ -1,0 +1,48 @@
+ADtoIDM.py Documentation
+This script syncs group(s) in the University's AD server
+with ARCC's IDM server. It doesn't create users. It simply adds
+or removes users until the given group(s) match on both the UW AD server
+and ARCC's IDM server.
+
+Necessary Files
+adtoidm.py
+uwyoldap.py
+idm_manage.py
+
+All of the above files can be found under the WyoARCC/idm-management-tools 
+repo.
+
+Python Modules Needed
+sys
+getpass
+subprocess
+argparse
+ldap
+
+All of these come with Python except for ldap.
+
+Permissions
+For the script to work, you'll need to have a Keberos key
+for a user with valid permissions to make changes
+to IDM in your keyring. The username and password prompt is to read
+the University's AD server.
+
+Usage
+The script takes arguments from the command line.
+Use --help for help
+
+positional arguments:
+  cns                   The script will attempt to add the given CNs.
+
+  optional arguments:
+    -h, --help            show this help message and exit
+    -u USERNAME, --username USERNAME
+    The username to be used to access the AD server. The
+    domain uwyo is assumed, so you don't have to specify it.
+
+
+CNs are just the group name. For example: UWIT-PL-ARCC-Interns
+Multiple groups can be synced at once. Just provide multiple
+CNs.
+If a username isn't given, the user will be prompted for it.
+You will always be prompted for a password. It doesn't echo.
