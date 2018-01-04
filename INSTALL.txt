@@ -1,0 +1,32 @@
+Installation and Setup
+======================
+
+1) To run these utils, must setup local machine as IPA client and install
+   ipa-admintools:
+
+	sudo yum install ipa-client
+	ipa-client-install
+   (Test if succeeded by running 'id <username>')
+	sudo yum install ipa-admintools
+
+----------------------
+
+2) To use any utility that requires the Python ldap module (e.g. adtoidm.py, 
+   find_ad_groups.py), it must be installed:
+
+	sudo pip install ldap
+
+----------------------
+
+3) To run any utility that uses ldapsearch (e.g. add-idm-user.py), must install:
+
+	sudo yum install openldap-clients
+
+----------------------
+
+4) To run utils that access IDM, need to obtain a Kerberos key.
+   Use site-specific information to do this.
+   (To verify having a valid Kerberos key, run:  klist)
+
+----------------------
+
