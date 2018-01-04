@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 ###
-#
 # add-idm-user.py
+#
+# To add AD users to IDM
 #
 # Troy Axthelm
 # Advanced Research Computing Center
@@ -10,10 +11,20 @@
 #
 # Created: 14 October 2015
 #
-#
-# Modified: <initials> <day> <month> <year> <change notes>
-#
+# Modified: <initials> <year>.<month>.<day> <change notes>
+# KM  2017.09.05 Added usage comment.
 ###
+
+# To add AD users to IDM, create a file <filename> which contains the usernames
+# to be added, one per line, and run:
+#
+#	./add-idm-user.py -f <filename>
+#
+# If a password file isn't set up, will prompt for username and password to 
+# login to AD. Connecting as yourself (i.e. a regular user, not admin/special) 
+# should work as read-only access to AD is needed. The connection to IDM must 
+# be as an admin user and is established before running this script by creating
+# a Kerberos ticket.
 
 import sys
 import argparse
@@ -102,7 +113,7 @@ else:
     args.defShell='bash'
 
 # import users from file if set
-if args.filename != None and args.manual == False: 
+if args.filename != None and args.manual == False:
     args.usernames = args.usernames + user_add.readusers(args.filename)
 
 man_uids = []

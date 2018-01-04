@@ -67,7 +67,9 @@ title:\t\t%s\nshell:\t\t%s" % (username, firstname, lastname, displayname, email
     adduser = [username, firstname, lastname, displayname, emailaddr, '','', phone, orgunit, title, shell]
     return adduser
 
-# read in users from a file
+# Read in users from a file
+#     File has one username per line
+#     Each username read from file retains a trailing newline character
 def readusers(filename):
     logging.debug("opening userfile to import users: " + filename)
     with open(filename) as userfile:

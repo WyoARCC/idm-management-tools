@@ -17,7 +17,7 @@
 ###
 
 import sys
-sys.path.insert(0, '/root/idm-management-tools/lib/')
+sys.path.insert(0, './lib/')
 import logging
 import operator
 import subprocess
