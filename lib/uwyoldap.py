@@ -1,9 +1,22 @@
 #!/bin/python
+###
+# uwyoldap.py
+#
+# Classes that use LDAP to access UWyo AD server. Originally was going to work 
+# with IDM server too, but the two servers are very different. A lot of this 
+# code could be better.
+#
+# 
+# Advanced Research Computing Center
+# University of Wyoming
+# @uwyo.edu
+#
+# Created: 
+# 
+# Modified: <initials> <year>.<month>.<day> <change notes>
+# KM  2017.09.05 Added function grp_search_substr
+###
 
-# Classes to make it easier to deal with Uwyo LDAP server
-# Originally was going to work with ARCC LDAP too,
-# but the two servers are very different.
-# A lot of this code could be better.
 import ldap
 import re
 
@@ -122,9 +135,10 @@ class UWyoLDAP(object):
         """Search for stuff by given cn's. Result is a list of LDAPObj objects.
         Type must be UWyoLDAP.USERS or UWyoLDAP.GROUPS. Computers aren't
         currently supported. The objects returned will be of the corresponding
-        subtype of LDAPObj objects. This stores objects that have already been found
-        once, so they aren't looked up again. This however will not work if a search
-        with no vals is done (just returning everything in the base)."""
+        subtype of LDAPObj objects. This stores objects that have already been 
+        found once, so they aren't looked up again. This, however, will not work
+        if a search with no vals is done (just returning everything in the 
+        base)."""
         
         searchers = {'cn': self.searchByCN, 'gidNumber': self.searchByGID}
         
@@ -164,6 +178,32 @@ class UWyoLDAP(object):
                             members_r =  add_info[0][1][add_info[0][1].keys()[0]]
                             range_v += range_inc
                             result[1]['member'].extend(members_r)
+                obj = createLDAPObj(result, self)
+                self.LDAPObjs['@' + objs_type + '@' + obj.cn] = obj
+                self.LDAPObjs['@' + objs_type + '@' + obj.gid] = obj
+                #self.LDAPObjs['@' + objs_type + '@' + obj.dn] = obj
+                objs.append(obj)
+        return objs
+
+    # Function grp_search_substr used by find_ad_groups.py
+    def grp_search_substr(self, substr, base=None):
+        """Search for groups whose name CONTAINS substr (rather than equals
+        a given string). Result is a list of LDAPObj objects. Object type must
+        be UWyoLDAP.USERS or UWyoLDAP.GROUPS. Computers aren't currently
+        supported. The objects returned will be of the corresponding subtype
+        of LDAPObj objects."""
+       
+	objs_type = GROUP 
+        filt = '(&(objectCategory=' + objs_type + ')(cn=*' + substr + '*))'
+	## Print DEBUG info:
+	#print 'base', base
+	#print 'filter', filt
+
+        results = self.srv.search_s(base, ldap.SCOPE_SUBTREE, filt, None)
+
+        objs = []
+        for result in results:
+            if result[0] is not None:
                 obj = createLDAPObj(result, self)
                 self.LDAPObjs['@' + objs_type + '@' + obj.cn] = obj
                 self.LDAPObjs['@' + objs_type + '@' + obj.gid] = obj

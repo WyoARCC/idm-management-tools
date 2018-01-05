@@ -1,7 +1,8 @@
 #!/usr/bin/env python
 ###
-#
 # ldap_tools.py
+#
+# Tools for accessing AD via LDAP.
 #
 # Troy Axthelm
 # Advanced Research Computing Center
@@ -9,17 +10,24 @@
 # troy.axthelm@uwyo.edu
 #
 # Created: 16 October 2015
-#
-#
-# Modified: <initials> <day> <month> <year> <change notes>
+# 
+# Modified: <initials> <year>.<month>.<day> <change notes>
 # JDB 2016.10.12 Shortened the code dramatically.
-#
+# KM  2017.09.05 Added option for interactive AD authentication.
 ###
+
+# Using these tools: If a password file is found, will attempt to connect to
+# AD as arccserv special/admin user, otherwise will prompt for username and 
+# password to use. So these functions can be used to access AD as either a 
+# regular or privileged user, depending on what is needed. (E.g. for read-only 
+# access to regular user attributes, connecting as regular user is sufficient.)
+
 import os
 import sys
 from collections import OrderedDict
 import logging
 import subprocess
+import getpass
 
 __version__='1.1'
 
@@ -29,24 +37,37 @@ attributes = ( "givenname sn name displayname mail "
 # Search for the LDAP Password File in special locations
 PASSWD_LIST = [os.getenv('HOME') + "/.holmes/pen",
                "/root/.holmes/pen"]
+PASSWD_FILE = ""
 for i in PASSWD_LIST:
     if os.path.isfile(i):
         PASSWD_FILE = i
         break
 
-# LDAP Base
+# Set LDAP connection parameters to connect to AD
 LDAP_DOMAIN = "windows.uwyo.edu"
 LDAP_DC = "dc=%s,dc=%s,dc=%s" % tuple(LDAP_DOMAIN.split("."))
 LDAP_URI = "ldap://%s" % (LDAP_DOMAIN)
-LDAP_BINDDN = ("cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,"
-               "%s " % (LDAP_DC))
-
-LDAP = ("ldapsearch -LLL -x " +
-        "-H \"%s\" " % (LDAP_URI) +
-        "-y \"%s\" " % (PASSWD_FILE) +
-        "-D \"%s\" " % (LDAP_BINDDN) +
-        "-b \"%%s,%s\" " % (LDAP_DC)
-       )
+if os.path.isfile(PASSWD_FILE):
+    LDAP_BINDDN = ("cn=arccserv,ou=Special_Accounts,ou=AdminGROUPS,"
+                   "%s " % (LDAP_DC))
+    LDAP = ("ldapsearch -LLL -x " +
+            "-H \"%s\" " % (LDAP_URI) +
+            "-y \"%s\" " % (PASSWD_FILE) +
+            "-D \"%s\" " % (LDAP_BINDDN) +
+            "-b \"%%s,%s\" " % (LDAP_DC)
+           )
+else:
+    connectuser = raw_input('AD username: ')
+    password = getpass.getpass()
+    LDAP_BINDDN = ("cn=%s,cn=Users,"
+                   "%s " % (connectuser,LDAP_DC))
+    LDAP = ("ldapsearch -LLL -x " +
+            "-H \"%s\" " % (LDAP_URI) +
+            "-w \"%s\" " % (password) +
+            "-D \"%s\" " % (LDAP_BINDDN) +
+            "-b \"%%s,%s\" " % (LDAP_DC)
+           )
+#print "DEBUG",LDAP_BINDDN
 
 # Search Areas of AD
 AREAS = OrderedDict()

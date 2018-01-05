@@ -17,7 +17,7 @@
 ###
 
 import sys
-sys.path.insert(0, '/root/idm-management-tools/lib/')
+sys.path.insert(0, './lib/')
 import argparse
 import logging
 import user_add
