@@ -34,6 +34,10 @@ __version__='1.1'
 attributes = ( "givenname sn name displayname mail "
                "uidnumber gidnumber telephonenumber department title" )
 
+attributes_extended = ( "givenname sn name displayname mail "
+               "uidnumber gidnumber telephonenumber department title"
+               "accountExpires isDeleted userAccountControl userParameters" )
+
 # Search for the LDAP Password File in special locations
 PASSWD_LIST = [os.getenv('HOME') + "/.holmes/pen",
                "/root/.holmes/pen"]
@@ -158,6 +162,92 @@ def parseresult(ldapstring):
     attrList = [name, givenname, sn, displayname, 
                 mail, uidnumber, gidnumber,  telephonenumber, 
                 department, title]
+    
+    logging.debug("Values parsed for %s: " % name)
+    logging.debug(attrList)
+
+    return attrList
+
+def ldapsearch_extended(username, shell="/bin/bash"):
+
+    for key in AREAS.keys():
+        logging.info("Searching in %s." % (AREAS[key][1]))
+        ldapcmd = "%s name=%s %s." % ( LDAP%AREAS[key][0],username,attributes_extended)
+        logging.debug(ldapcmd)
+
+        # run the ldap cmd
+        searchresult = subprocess.Popen(ldapcmd, 
+                                        stdout=subprocess.PIPE,
+                                        shell=True)
+
+        searchresult = searchresult.communicate()[0]
+
+        if searchresult:
+            logging.info("Found user, %s, in %s." % (username,AREAS[key][1]))
+            break
+
+    if not searchresult: return "NOUSER"
+
+    result = parseresult_extended(searchresult)
+    result.append(shell)
+
+    if ( result[0] == '' or result[5] == '' or result[6] == '' ):
+        logging.critical("no value for [name | gid | uid]")
+        sys.exit(2)    
+    
+    return result
+    
+    # should not ever get here but if so, exit with error
+    logging.critical("bad ldap search, should not be here")
+    sys.exit(1)    
+
+def parseresult_extended(ldapstring):
+
+    attrlist = ldapstring.split("\n")
+    name=''
+    givenname=''
+    sn=''
+    displayname=''
+    mail=''
+    uidnumber=''
+    gidnumber=''
+    telephonenumber=''
+    department=''
+    title=''
+    useraccountcontrol=''
+    
+    for element in attrlist:
+        element = element.split(": ")
+        
+        if element[0].lower() =='dn':
+            logging.debug("recognized returned ldap string")
+        elif element[0].lower() == 'name':
+            name = element[1].lower()
+        elif element[0].lower() == 'givenname':
+            givenname = element[1]
+        elif element[0].lower() == 'sn':    
+            sn = element[1]
+        elif element[0].lower() == 'displayname':
+            displayname = element[1]
+        elif element[0].lower() == 'mail':
+            mail = element[1].lower()
+        elif element[0].lower() == 'uidnumber':
+            uidnumber = element[1]
+        elif element[0].lower() == 'gidnumber':
+            gidnumber = element[1]
+        elif element[0].lower() == 'telephonenumber':
+            telephonenumber = element[1]
+        elif element[0].lower() == 'department':
+            department = element[1]
+        elif element[0].lower() == 'title':
+            title = element[1]
+        elif element[0].lower() == 'useraccountcontrol':
+            useraccountcontrol = element[1]
+
+    attrList = [name, givenname, sn, displayname, 
+                mail, uidnumber, gidnumber,  telephonenumber, 
+                department, title,
+                useraccountcontrol]
     
     logging.debug("Values parsed for %s: " % name)
     logging.debug(attrList)
