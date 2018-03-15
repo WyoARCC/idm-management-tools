@@ -8,7 +8,7 @@ import ldap
 import subprocess
 
 def print_usage():
-    print "\nget_ad_groups.py <group_search_string>"
+    print "\nfind_ad_groups.py <group_search_string>"
     print "Argment <group_search_string> is required.\n"
 
 # Read argument to get search string

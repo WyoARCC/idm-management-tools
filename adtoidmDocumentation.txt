@@ -2,7 +2,9 @@ ADtoIDM Documentation
 =====================
 adtoidm.py: This script syncs group(s) from the University's AD server to ARCC's
 IDM server. It doesn't create users. It simply adds or removes users from/to IDM
-groups until they match the group membership on the UW AD server.
+groups until they match the group membership on the UW AD server. If the AD
+group doesn't exist in IDM, then a group with the same name and GID as AD is
+created in IDM.
 
 Necessary Files:
 ----------------
@@ -27,7 +29,7 @@ All of these come with Python except for ldap. It can be installed by:
 Permissions:
 ------------
 1) For the script to work, you'll need to have a Keberos key for a user with 
-   permissions to make changes to IDM (the user 'admin' works) in your keyring. 
+   permissions to make changes to IDM (use site-specific information for this). 
 2) The prompt for username and password while the script is running is for an
    AD user (logging in as self should work).
 
