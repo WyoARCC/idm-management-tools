@@ -35,8 +35,9 @@ attributes = ( "givenname sn name displayname mail "
                "uidnumber gidnumber telephonenumber department title" )
 
 attributes_extended = ( "givenname sn name displayname mail "
-               "uidnumber gidnumber telephonenumber department title"
-               "accountExpires isDeleted userAccountControl userParameters" )
+               "uidnumber gidnumber telephonenumber department title "
+               "accountExpires isDeleted userAccountControl userParameters "
+               "memberOf lastLogonTimestamp " )
 
 # Search for the LDAP Password File in special locations
 PASSWD_LIST = [os.getenv('HOME') + "/.holmes/pen",
@@ -215,10 +216,11 @@ def parseresult_extended(ldapstring):
     department=''
     title=''
     useraccountcontrol=''
+    memberof = []
+    lastlogontimestamp = ''
     
     for element in attrlist:
         element = element.split(": ")
-        
         if element[0].lower() =='dn':
             logging.debug("recognized returned ldap string")
         elif element[0].lower() == 'name':
@@ -243,11 +245,15 @@ def parseresult_extended(ldapstring):
             title = element[1]
         elif element[0].lower() == 'useraccountcontrol':
             useraccountcontrol = element[1]
+        elif element[0].lower() == 'memberof':
+            memberof.append(element[1])
+        elif element[0].lower() == 'lastlogontimestamp':
+            lastlogontimestamp = element[1]
 
     attrList = [name, givenname, sn, displayname, 
-                mail, uidnumber, gidnumber,  telephonenumber, 
+                mail, uidnumber, gidnumber, telephonenumber, 
                 department, title,
-                useraccountcontrol]
+                useraccountcontrol, memberof, lastlogontimestamp]
     
     logging.debug("Values parsed for %s: " % name)
     logging.debug(attrList)

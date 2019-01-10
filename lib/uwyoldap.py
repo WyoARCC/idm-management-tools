@@ -15,9 +15,11 @@
 # 
 # Modified: <initials> <year>.<month>.<day> <change notes>
 # KM  2017.09.05 Added function grp_search_substr
+# KM  2018.11.08 Added class UWyoLDAPmodify
 ###
 
 import ldap
+import ldap.modlist
 import re
 
 URL = 'ldaps://windows.uwyo.edu'
@@ -188,10 +190,9 @@ class UWyoLDAP(object):
     # Function grp_search_substr used by find_ad_groups.py
     def grp_search_substr(self, substr, base=None):
         """Search for groups whose name CONTAINS substr (rather than equals
-        a given string). Result is a list of LDAPObj objects. Object type must
-        be UWyoLDAP.USERS or UWyoLDAP.GROUPS. Computers aren't currently
-        supported. The objects returned will be of the corresponding subtype
-        of LDAPObj objects."""
+        a given string). Result is a list of UWyoLDAP.GROUPS (a subtype of
+        LDAPObj objects). 
+        """
        
 	objs_type = GROUP 
         filt = '(&(objectCategory=' + objs_type + ')(cn=*' + substr + '*))'
@@ -210,6 +211,105 @@ class UWyoLDAP(object):
                 #self.LDAPObjs['@' + objs_type + '@' + obj.dn] = obj
                 objs.append(obj)
         return objs
+
+    # Function user_get_groups
+    def user_get_groups(self, uname, base=None):
+        """Search for groups that the user uname is a member of. Result is a 
+        list of UWyoLDAP.GROUPS (a subtype of LDAPObj objects).
+        """
+       
+	objs_type = GROUP 
+        filt = '(&(objectCategory=' + objs_type + ')(cn=' + uname + ',cn=Users))'
+	## Print DEBUG info:
+	#print 'base', base
+	#print 'filter', filt
+
+        results = self.srv.search_s(base, ldap.SCOPE_SUBTREE, filt, None)
+
+        objs = []
+        for result in results:
+            if result[0] is not None:
+                obj = createLDAPObj(result, self)
+                self.LDAPObjs['@' + objs_type + '@' + obj.cn] = obj
+                self.LDAPObjs['@' + objs_type + '@' + obj.gid] = obj
+                #self.LDAPObjs['@' + objs_type + '@' + obj.dn] = obj
+                objs.append(obj)
+        return objs
+
+
+class UWyoLDAPmodify(object):
+    """Similar to above UWyoLDAP class, but used to modify data in AD instead
+    of just searching it."""
+
+    LDAPObjs = {}
+
+    def __init__(self, username, password):
+        self.srv = ldap.initialize(URL)
+        self.srv.set_option(ldap.OPT_X_TLS_REQUIRE_CERT, ldap.OPT_X_TLS_NEVER)
+        self.srv.simple_bind_s(username, password)
+        del password
+
+    def unbind(self):
+        self.srv.unbind()
+    
+    def searchByCN(self, cns, cn_type, attrs=None, base=None):
+        filt = '(|' + ''.join('(CN={})'.format(n) for n in cns) + ')'
+        filt = '(&(objectCategory=' + cn_type + ')' + filt + ')'
+
+        if base:
+            b = base
+        else:
+            b = BASE
+
+        if attrs and type(attrs) is not list:
+            attrs = [attrs]
+
+        return self.srv.search_s(b, ldap.SCOPE_SUBTREE, filt, attrs)
+
+    # Function grp_search_substr
+    def grp_search_substr(self, substr, base=None):
+        """Search for groups whose name CONTAINS substr (rather than equals
+        a given string). Result is a list of UWyoLDAP.GROUPS (a subtype of
+        LDAPObj objects). 
+        """
+       
+	objs_type = GROUP 
+        filt = '(&(objectCategory=' + objs_type + ')(cn=*' + substr + '*))'
+	## Print DEBUG info:
+	#print 'base', base
+	#print 'filter', filt
+
+        results = self.srv.search_s(base, ldap.SCOPE_SUBTREE, filt, None)
+
+        objs = []
+        for result in results:
+            if result[0] is not None:
+                obj = createLDAPObj(result, self)
+                self.LDAPObjs['@' + objs_type + '@' + obj.cn] = obj
+                self.LDAPObjs['@' + objs_type + '@' + obj.gid] = obj
+                #self.LDAPObjs['@' + objs_type + '@' + obj.dn] = obj
+                objs.append(obj)
+        return objs
+
+    # Function add_ad_group
+    def add_ad_group(self, dn, cn, description, gidNumber, members):
+        """Add group to AD
+        """
+      
+	moddict = {'cn': [cn], 'name': [cn], 'sAMAccountName': [cn], 'description': [description], 'gidNumber': [str(gidNumber)], 'member': members, 'objectClass': ['top', 'group']}
+	modlist = ldap.modlist.addModlist(moddict)
+ 
+	## Print DEBUG info:
+	#print 'dn', dn
+	#print 'modlist', modlist
+
+	try:
+        	self.srv.add_s(dn, modlist)
+	except ldap.LDAPError, e:
+		print "Error on attempt to add group:"
+		print e
+	else:
+		print "Added group "+cn
 
 
 class LDAPObj(object):

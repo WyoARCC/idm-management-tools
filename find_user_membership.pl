@@ -1,5 +1,6 @@
 #!/usr/bin/python
-# Karen: modified from adtoidm.py to get a list of AD groups
+# Karen: modified from find_ad_groups.py to get a list of groups that user is
+# a member of
 import os
 import sys
 sys.path.insert(0, './lib/')
@@ -9,8 +10,8 @@ import ldap
 import subprocess
 
 def print_usage():
-    print "\nfind_ad_groups.py <group_search_string>"
-    print "Argment <group_search_string> is required.\n"
+    print "\nfind_user_membership.py <grp-name>"
+    print "Argment <grp-name> is required.\n"
 
 # Read argument to get search string
 if len(sys.argv) < 2:
@@ -53,7 +54,7 @@ except:
     sys.exit()
 
 # Search for all AD groups
-ad_groups = srv.grp_search_substr(search_str, 'OU=Groups,OU=petaLibrary,OU=UWIT-RESEARCH,OU=uwit,OU=Department Managed,DC=windows,DC=uwyo,DC=edu')
+ad_groups = srv.user_get_groups(search_str, 'OU=Groups,OU=petaLibrary,OU=UWIT-RESEARCH,OU=uwit,OU=Department Managed,DC=windows,DC=uwyo,DC=edu')
 
 if not ad_groups:
     print "No matching groups were found on UW AD server. Exiting..."

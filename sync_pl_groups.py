@@ -49,7 +49,7 @@ except:
     sys.exit()
 
 # Connect to IDM
-arcc_ldap = 'ldaps://arccidm1.arcc.uwyo.edu'
+arcc_ldap = 'ldaps://arccidm2.arcc.uwyo.edu'
 arcc_d = ldap.initialize(arcc_ldap)
 arcc_d.simple_bind_s()
 
